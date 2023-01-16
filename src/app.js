@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import chalk from "chalk"
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient } from "mongodb";
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -52,19 +52,20 @@ app.post("/messages", async (req, res) => {
   let { user } = req.headers;
 
   try {
-    const usuarioExiste = await db.collection("messages").findOne({ })
-    if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
-
-    await db.collection("participants").insertOne({ name })
-    res.send("ok")
+      await db.collection("messages").insertOne({ 
+        from: user,
+      to,
+      text,
+      type,
+      time
+      
+    })
+    return res.status(201).send("Mensagem enviada")
 
   } catch (err) {
     res.status(422).send("Deu algo errado no servidor!")
   }
 })
-
-
-
 
 
 app.listen(5000, () => {
