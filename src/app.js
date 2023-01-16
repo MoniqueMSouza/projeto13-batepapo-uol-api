@@ -4,6 +4,7 @@ import chalk from "chalk"
 import { MongoClient } from "mongodb";
 import dotenv from 'dotenv'
 import joi from 'joi'
+import dayjs from 'dayjs'
 
 dotenv.config()
 
@@ -28,6 +29,10 @@ app.use(express.json());
 app.post("/participants", async (req, res) => {
   const usuario = req.body;
 
+  const time = Date.now();
+  const timestamp = dayjs(time).format("HH:mm:ss");
+  
+
   const usuarioSchema = joi.object({
     name: joi.string().required()
   })
@@ -39,8 +44,17 @@ app.post("/participants", async (req, res) => {
   const usuarioExiste = await db.collection("participants").findOne({ name: usuario.name })
   if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
 
-  await db.collection("participants").insertOne({ name: usuario.name })
-  res.status(201).send("ok")
+
+  await db.collection("participants").insertOne({ name: usuario.name, lastStatus: time })
+  await db.collection("messages").insertOne({
+      from: usuario.name,
+      to: "Todos",
+      text: "entra na sala...",
+      type: "status",
+      time: timestamp,
+    });
+
+    return res.status(201).send("Usuário Registrado!");
 
 })
 
