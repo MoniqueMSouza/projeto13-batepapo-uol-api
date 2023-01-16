@@ -8,14 +8,14 @@ dotenv.config()
 const mongoClient = new MongoClient(process.env.DATABASE_URL);
 let db;
 
-mongoClient.connect()
-  .then(() => {
-    db = mongoClient.db("bate-papo-uol-api");
-    console.log('Conectou com o mongodb!')
-  })
-  .catch(() =>
-    console.log('Deu erro no banco de dados!')
-  )
+try {
+  mongoClient.connect()
+  db = mongoClient.db();
+  console.log('Conectou com o mongodb!')
+} catch (error) {
+  console.log('Deu erro no banco de dados!')
+}
+
 
 const app = express();
 
@@ -25,30 +25,48 @@ app.use(express.json());
 
 app.post("/participants", async (req, res) => {
   const { name } = req.body;
+
+
+  try {
+    const usuarioExiste = await db.collection("participants").findOne({ name })
+    if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
+
+    await db.collection("participants").insertOne({ name })
+    res.status(201).send("ok")
+
+  } catch (err) {
+    res.status(422).send("Deu algo errado no servidor!")
+  }
+})
+
+app.get("/participants", async (req, res) => {
+  const usuarios = await db.collection("participants").find().toArray()
   
-  const usuarioExiste = await db.collection("participants").findOne({ name })
-  if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
-  await db.collection("participants").insertOne({ name })
-
-  res.send("ok")
-})
-
-app.get("/participants", (req, res) => {
-  const usuarios = db.collection("participants").find().toArray().then(dados => {
-    return res.send(dados)
-  }).catch(() => {
-    res.status(500).send('Erro no banco de dados')
-  })
+    return res.status(200).send(usuarios)
+  
 })
 
 
+app.post("/messages", async (req, res) => {
+  const { to, text, type} = req.body;
+  let { user } = req.headers;
+
+  try {
+    const usuarioExiste = await db.collection("messages").findOne({ })
+    if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
+
+    await db.collection("participants").insertOne({ name })
+    res.send("ok")
+
+  } catch (err) {
+    res.status(422).send("Deu algo errado no servidor!")
+  }
+})
 
 
 
 
 
-const PORT = 5000
-
-app.listen(PORT, () => {
-  console.log(chalk.blue(`Servidor Funcionando na porta => ${PORT}!`));
+app.listen(5000, () => {
+  console.log(chalk.blue('Servidor Funcionando na porta 5000'));
 })
