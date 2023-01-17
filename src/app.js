@@ -24,6 +24,8 @@ const app = express();
 const time = Date.now();
 const timestamp = dayjs(time).format("HH:mm:ss");
 
+setInterval(usuariosInativos, 15000);
+
 app.use(cors());
 app.use(express.json());
 
@@ -126,11 +128,9 @@ app.post("/status", async (req, res) => {
 })
 
 async function usuariosInativos() {
-  const usuarios = await db.collection("participants").find().toArray()
+  const usuarios = await db.collection("participants").find().toArray()  
   
-  
-  
-  usuarios.forEach(async (user) => {
+  usuarios.map(async (user) => {
     const lastStatus = user.lastStatus;
     const name = user.name;
 
@@ -146,7 +146,8 @@ async function usuariosInativos() {
     }
   });
 }
-setInterval(usuariosInativos, 15000);
+
+
 
 app.listen(5000, () => {
   console.log(chalk.blue('Servidor Funcionando na porta 5000'));
