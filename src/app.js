@@ -101,9 +101,24 @@ app.post("/messages", async (req, res) => {
 })
 
 app.get("/messages", async (req, res) => {
-  const mensagens = await db.collection("messages").find().toArray()
+  const limite=req.query.limit;
+  const {user}=req.headers;
 
-  return res.status(200).send(mensagens)
+  try{
+      const mensagens = await db.collection("messages").find({ $or: [{ from: user }, { to: "Todos" }, { to: user }] }).toArray();
+      
+      if (!limite) return res.send(mensagens);
+      
+      if (limite > 0 && parseInt(limite)!== "NaN") {
+          const dados = mensagens.reverse().slice(0, parseInt(limite));
+          return res.send(dados);
+      }else{
+          return res.sendStatus(422);
+      }
+      
+  }catch(error){
+      res.status(500).send(error.message);
+  } 
 
 })
 
