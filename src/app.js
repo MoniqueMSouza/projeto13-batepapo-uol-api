@@ -24,7 +24,6 @@ const app = express();
 const time = Date.now();
 const timestamp = dayjs(time).format("HH:mm:ss");
 
-setInterval(usuariosInativos, 15000);
 
 app.use(cors());
 app.use(express.json());
@@ -127,25 +126,31 @@ app.post("/status", async (req, res) => {
   }
 })
 
-async function usuariosInativos() {
-  const usuarios = await db.collection("participants").find().toArray()  
+setInterval(async () => {
   
-  usuarios.map(async (user) => {
-    const lastStatus = user.lastStatus;
-    const name = user.name;
+  const usuariosInativos = await db.collection("participants").find({}).toArray();
+  
+  usuariosInativos.forEach(async (usuarioInativo) => {
+    if (time - usuarioInativo.lastStatus >= 10000) {
 
-    if (time - lastStatus > 10000) {
-      await db.collection("participants").deleteOne({ name: name });
-      await db.collection("messages").insertOne({
-        from: name,
-        to: "Todos",
-        text: "sai da sala...",
-        type: "status",
-        time: timestamp,
-      });
+      try {
+        const resultado = await db.collection("participants").deleteOne({ _id: ObjectId(usuarioInativo._id) });
+
+        if (resultado.deletedCount === 1) {
+          await db.collection("messages").insertOne({
+            from: usuarioInativo.name,
+            to: "Todos",
+            text: "sai da sala...",
+            type: "status",
+            time:timestamp ,
+          });
+        }
+      } catch (err) {
+        return console.log(err);
+      }
     }
   });
-}
+}, 10000);
 
 
 
