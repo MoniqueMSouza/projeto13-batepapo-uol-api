@@ -125,6 +125,28 @@ app.post("/status", async (req, res) => {
   }
 })
 
+async function usuariosInativos() {
+  const usuarios = await db.collection("participants").find().toArray()
+  
+  
+  
+  usuarios.forEach(async (user) => {
+    const lastStatus = user.lastStatus;
+    const name = user.name;
+
+    if (time - lastStatus > 10000) {
+      await db.collection("participants").deleteOne({ name: name });
+      await db.collection("messages").insertOne({
+        from: name,
+        to: "Todos",
+        text: "sai da sala...",
+        type: "status",
+        time: timestamp,
+      });
+    }
+  });
+}
+setInterval(usuariosInativos, 15000);
 
 app.listen(5000, () => {
   console.log(chalk.blue('Servidor Funcionando na porta 5000'));
