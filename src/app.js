@@ -87,7 +87,7 @@ app.post("/messages", async (req, res) => {
       to,
       text,
       type,
-      time
+      time: timestamp
 
     })
     return res.status(201).send("Mensagem enviada")
