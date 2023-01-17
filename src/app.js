@@ -101,7 +101,11 @@ app.post("/messages", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
   const {user} = req.headers
-  const limite = parseInt(req.query.limit)
+  const limite = req.query.limit
+
+  if (isNaN(limite) && limite || parseInt(limite) <= 0) return res.sendStatus(422)
+
+  try{
   const mensagens = await db.collection("messages").find({
     $or: [
       { to: user },
@@ -111,7 +115,11 @@ app.get("/messages", async (req, res) => {
     ],
   }).limit(limite).toArray()
 
-  return res.status(200).send(mensagens)
+  res.status(201).send(mensagens)
+} catch (error) {
+  console.error(error)
+  res.status(500).send("Erro no servidor")
+}
 
 })
 
