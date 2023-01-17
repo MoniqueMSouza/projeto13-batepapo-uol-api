@@ -111,15 +111,15 @@ app.post("/status", async (req, res) => {
   let { user } = req.headers;
 
   const usuarioExiste = await db.collection("participants").findOne({ name: user })
-  if (!usuarioExiste) return res.status(404).send()
+  if (!usuarioExiste){ return res.status(404).send("Usuario não existe")}
 
   try {
-    await collectionUsers.updateOne(
+    await db.collection("participants").updateOne(
       { name: user },
       { $set: { lastStatus: Date.now() }});
 
     return res.status(200).send();
-    
+
   } catch {
     return res.status(422).send();
   }
