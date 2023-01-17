@@ -141,32 +141,33 @@ app.post("/status", async (req, res) => {
   }
 })
 
-setInterval(async () => {
-  
-  const usuariosInativos = await db.collection("participants").find({}).toArray();
-  
-  usuariosInativos.forEach(async (usuarioInativo) => {
-    if (time - usuarioInativo.lastStatus >= 10000) {
+setInterval(async ()=>{
+  const segundos =Date.now()-10000;
 
-      try {
-        const resultado = await db.collection("participants").deleteOne({ _id: ObjectId(usuarioInativo._id) });
+  try{
+      const inativos=await db.collection("participants").find({lastStatus: {$lte: segundos}}).toArray();
 
-        if (resultado.deletedCount === 1) {
-          await db.collection("messages").insertOne({
-            from: usuarioInativo.name,
-            to: "Todos",
-            text: "sai da sala...",
-            type: "status",
-            time:timestamp ,
-          });
-        }
-      } catch (err) {
-        return console.log(err);
+      if(inativos.length>0){
+          const msgInativos=inativos.map(
+              (inativo)=>{
+                  return {
+                      from: inativo.name,
+                      to: "Todos",
+                      text: "sai da sala...",
+                      type: "status",
+                      time: dayjs().format("HH:mm:ss")
+                  };
+
+              }
+          );
+
+          await db.collection("messages").insertMany(msgInativos);
+          await db.collection("participants").deleteMany({lastStatus: {$lte: segundos}});
       }
-    }
-  });
-}, 10000);
-
+  }catch(error){
+      res.status(500).send(error.message);
+  }
+},15000);
 
 
 app.listen(5000, () => {
