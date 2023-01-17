@@ -100,7 +100,16 @@ app.post("/messages", async (req, res) => {
 })
 
 app.get("/messages", async (req, res) => {
-  const mensagens = await db.collection("messages").find().toArray()
+  const {user} = req.headers
+  const limite = parseInt(req.query.limit)
+  const mensagens = await db.collection("messages").find({
+    $or: [
+      { to: user },
+      { from: user },
+      { to: "Todos" },
+      { type: "message" },
+    ],
+  }).limit(limite).toArray()
 
   return res.status(200).send(mensagens)
 
