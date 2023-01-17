@@ -80,6 +80,8 @@ app.post("/messages", async (req, res) => {
   const validation = mensagemSchema.validate({ to, text, type, from: user })
   if (validation.error) return res.status(422).send()
 
+  const usuarioExiste = await db.collection("participants").findOne({ name: user })
+  if (!usuarioExiste) return res.status(422).send("Esse usuário não existe")
 
   try {
     await db.collection("messages").insertOne({
