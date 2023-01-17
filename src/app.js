@@ -100,26 +100,9 @@ app.post("/messages", async (req, res) => {
 })
 
 app.get("/messages", async (req, res) => {
-  const {user} = req.headers
-  const limite = req.query.limit
+  const mensagens = await db.collection("messages").find().toArray()
 
-  if (isNaN(limite) && limite || parseInt(limite) <= 0) return res.sendStatus(422)
-
-  try{
-  const mensagens = await db.collection("messages").find({
-    $or: [
-      { to: user },
-      { from: user },
-      { to: "Todos" },
-      { type: "message" },
-    ],
-  }).limit(limite).toArray()
-
-  res.status(201).send(mensagens)
-} catch (error) {
-  console.error(error)
-  res.status(500).send("Erro no servidor")
-}
+  return res.status(200).send(mensagens)
 
 })
 
