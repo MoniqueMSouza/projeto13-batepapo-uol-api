@@ -106,6 +106,25 @@ app.get("/messages", async (req, res) => {
 
 })
 
+app.post("/status", async (req, res) => {
+  
+  let { user } = req.headers;
+
+  const usuarioExiste = await db.collection("participants").findOne({ name: user })
+  if (!usuarioExiste) return res.status(404).send()
+
+  try {
+    await collectionUsers.updateOne(
+      { name: user },
+      { $set: { lastStatus: Date.now() }});
+
+    return res.status(200).send();
+    
+  } catch {
+    return res.status(422).send();
+  }
+})
+
 
 app.listen(5000, () => {
   console.log(chalk.blue('Servidor Funcionando na porta 5000'));
