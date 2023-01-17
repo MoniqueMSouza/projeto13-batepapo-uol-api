@@ -21,29 +21,28 @@ try {
 
 
 const app = express();
-
+const time = Date.now();
+const timestamp = dayjs(time).format("HH:mm:ss");
 
 app.use(cors());
 app.use(express.json());
 
 app.post("/participants", async (req, res) => {
-  
+
   const usuario = req.body;
 
-  const time = Date.now();
-  const timestamp = dayjs(time).format("HH:mm:ss");
-  const usuarioSchema = joi.object({name: joi.string().required()})
+  const usuarioSchema = joi.object({ name: joi.string().required() })
 
   const validation = usuarioSchema.validate(usuario)
   if (validation.error) return res.status(422).send('Preencha o campo com nome!')
- 
-  try{
-  const usuarioExiste = await db.collection("participants").findOne({ name: usuario.name })
-  if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
 
- 
-  await db.collection("participants").insertOne({ name: usuario.name, lastStatus: time })
-  await db.collection("messages").insertOne({
+  try {
+    const usuarioExiste = await db.collection("participants").findOne({ name: usuario.name })
+    if (usuarioExiste) return res.status(409).send("Esse usuário já existe")
+
+
+    await db.collection("participants").insertOne({ name: usuario.name, lastStatus: time })
+    await db.collection("messages").insertOne({
       from: usuario.name,
       to: "Todos",
       text: "entra na sala...",
@@ -53,7 +52,7 @@ app.post("/participants", async (req, res) => {
 
     return res.status(201).send("Usuário Registrado!");
 
-  }catch(err){
+  } catch (err) {
     return res.status(500).send(err.message)
   }
 })
@@ -66,19 +65,19 @@ app.get("/participants", async (req, res) => {
 })
 
 app.post("/messages", async (req, res) => {
-  
+
   const { to, text, type } = req.body;
   let { user } = req.headers;
-  
+
   const mensagemSchema = joi.object({
     to: joi.string().required(),
     text: joi.string().required(),
     type: joi.string().required().valid("message", "private_message"),
     from: joi.string().required()
-  
+
   })
 
-  const validation = mensagemSchema.validate({to, text, type, from:user})
+  const validation = mensagemSchema.validate({ to, text, type, from: user })
   if (validation.error) return res.status(422).send()
 
 
@@ -96,6 +95,13 @@ app.post("/messages", async (req, res) => {
   } catch (err) {
     res.status(422).send("Deu algo errado no servidor!")
   }
+})
+
+app.get("/messages", async (req, res) => {
+  const mensagens = await db.collection("messages").find().toArray()
+
+  return res.status(200).send(mensagens)
+
 })
 
 
